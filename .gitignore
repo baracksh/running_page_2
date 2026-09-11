@@ -1,0 +1,25 @@
+# Node
+node_modules/
+dist/
+.vite/
+
+# Python venv
+.venv/
+__pycache__/
+*.pyc
+
+# Sync state / cached data
+run_page/data.db
+run_page/data.db-journal
+imported.json
+GPX_OUT/*.gpx
+FIT_OUT/*.fit
+!GPX_OUT/.gitkeep
+!FIT_OUT/.gitkeep
+
+# Logs
+*.log
+.dev-server.log
+
+# OS
+.DS_Store
