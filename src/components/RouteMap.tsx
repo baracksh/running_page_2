@@ -21,10 +21,15 @@ export function RouteMap({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
 
-  const style =
-    dark !== false
-      ? 'mapbox://styles/mapbox/dark-v11'
-      : 'mapbox://styles/mapbox/light-v11';
+  // Carto basemaps (free, no Mapbox token needed) — see src/themes/classic/utils/const.ts for vendor config.
+  // If MAPBOX_TOKEN is set, use Mapbox styles instead for higher-fidelity tiles.
+  const style = MAPBOX_TOKEN
+    ? (dark !== false
+        ? 'mapbox://styles/mapbox/dark-v11'
+        : 'mapbox://styles/mapbox/light-v11')
+    : (dark !== false
+        ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+        : 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json');
 
   // Declared before the effects that reference it (react-hooks/immutability).
   function updateRoutes() {
@@ -149,7 +154,8 @@ export function RouteMap({
       return;
     }
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+    // Use accessToken only when needed (mapbox:// URLs). For Carto basemaps, no token is required.
+    mapboxgl.accessToken = MAPBOX_TOKEN || 'no-token';
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style,
