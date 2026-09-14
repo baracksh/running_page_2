@@ -1,6 +1,9 @@
 import datetime
+import json
+import os
 import random
 import string
+import time
 
 from geopy.geocoders import options, Nominatim
 from sqlalchemy import (
@@ -28,6 +31,80 @@ def randomword():
 options.default_user_agent = "running_page"
 # reverse the location (lat, lon) -> location detail
 g = Nominatim(user_agent=randomword())
+
+
+# -----------------------------------------------------------------------------
+# Reverse-geocode cache (Nominatim / OpenStreetMap).
+#
+# Nominatim's usage policy caps us at 1 request/second.  Calling it for every
+# activity during bulk sync blows the timeout (hundreds of activities ⇒ 60+ min).
+# Instead we memoise each (lat, lon) pair rounded to 3 decimals (~110 m) into a
+# JSON file checked into git.  Future syncs only hit Nominatim for genuinely
+# new start points (rare — most runners do loops from the same neighbourhood).
+# -----------------------------------------------------------------------------
+GEO_CACHE_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "geo_cache.json"
+)
+
+
+def _load_geo_cache():
+    if os.path.exists(GEO_CACHE_FILE):
+        try:
+            with open(GEO_CACHE_FILE, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+                return data if isinstance(data, dict) else {}
+        except (OSError, ValueError):
+            return {}
+    return {}
+
+
+def _save_geo_cache(cache):
+    with open(GEO_CACHE_FILE, "w", encoding="utf-8") as fh:
+        json.dump(cache, fh, indent=2, ensure_ascii=False, sort_keys=True)
+
+
+def get_cached_country(start_point):
+    """Return the reverse-geocoded country/region for (lat, lon), using the
+    persistent cache.  Cache misses trigger a single Nominatim call and a
+    1-second sleep to honour its rate limit."""
+    if not start_point or len(start_point) < 2:
+        return ""
+    try:
+        lat = float(start_point[0])
+        lon = float(start_point[1])
+    except (TypeError, ValueError):
+        return ""
+    key = f"{round(lat, 3)},{round(lon, 3)}"
+    cache = _load_geo_cache()
+    if key in cache:
+        return cache[key]
+    country = ""
+    try:
+        loc = g.reverse(f"{lat}, {lon}", language="zh")
+        if loc:
+            country = str(loc)
+    except Exception as exc:  # noqa: BLE001 — Nominatim failures must not abort sync
+        print(f"Nominatim reverse failed for {key}: {exc}")
+    # Persist even an empty result so we don't hammer a failing endpoint.
+    cache[key] = country
+    _save_geo_cache(cache)
+    time.sleep(1.0)
+    return country
+
+
+def lookup_cached_country(start_point):
+    """Read-only lookup against the geo cache (no Nominatim calls, no sleeps).
+    Returns "" on cache miss — used to backfill existing activities without
+    triggering network traffic on every sync."""
+    if not start_point or len(start_point) < 2:
+        return ""
+    try:
+        lat = float(start_point[0])
+        lon = float(start_point[1])
+    except (TypeError, ValueError):
+        return ""
+    key = f"{round(lat, 3)},{round(lon, 3)}"
+    return _load_geo_cache().get(key, "")
 
 
 ACTIVITY_KEYS = [
@@ -105,12 +182,11 @@ def update_or_create_activity(session, run_activity):
         if not activity:
             start_point = run_activity.start_latlng
             location_country = getattr(run_activity, "location_country", "")
-            # SKIP reverse geocoding: Nominatim (OSM) has a strict 1 req/sec
-            # rate limit; calling it for hundreds of activities makes sync
-            # take 30+ minutes. The province counter on the page shows 0/35
-            # anyway when location_country is empty, so this is a safe skip.
-            # if not location_country and start_point or location_country == "China":
-            #     try: location_country = str(g.reverse(...)) ...
+            # Reverse-geocode the start point via the persistent Nominatim cache.
+            # Most syncs are cache hits, so we only hit the 1 req/sec endpoint for
+            # genuinely new neighbourhoods.
+            if not location_country and start_point:
+                location_country = get_cached_country(start_point)
 
             activity = Activity(
                 run_id=run_activity.id,
@@ -145,6 +221,14 @@ def update_or_create_activity(session, run_activity):
             activity.summary_polyline = (
                 run_activity.map and run_activity.map.summary_polyline or ""
             )
+            # Backfill location_country from the persistent cache for activities
+            # that pre-date the cache (e.g. the initial 532 COROS activities
+            # committed before reverse geocoding was wired up).  This is a
+            # cache-only lookup — no Nominatim traffic — so it's safe on every sync.
+            if not activity.location_country:
+                cached = lookup_cached_country(run_activity.start_latlng)
+                if cached:
+                    activity.location_country = cached
     except Exception as e:
         print(f"something wrong with {run_activity.id}")
         print(str(e))

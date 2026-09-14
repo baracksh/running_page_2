@@ -9,7 +9,8 @@ __pycache__/
 *.pyc
 
 # Sync state / cached data
-run_page/data.db
+# data.db IS tracked: it holds all activities (incl. NRC history imported
+# once from GPX). CI's coros_sync adds new COROS activities on top of it.
 run_page/data.db-journal
 imported.json
 GPX_OUT/*.gpx
