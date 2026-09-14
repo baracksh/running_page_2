@@ -105,28 +105,12 @@ def update_or_create_activity(session, run_activity):
         if not activity:
             start_point = run_activity.start_latlng
             location_country = getattr(run_activity, "location_country", "")
-            # or China for #176 to fix
-            if not location_country and start_point or location_country == "China":
-                try:
-                    location_country = str(
-                        g.reverse(
-                            f"{start_point.lat}, {start_point.lon}",
-                            language="zh-CN",  # type: ignore
-                            timeout=15,
-                        )
-                    )
-                # limit (only for the first time)
-                except Exception:
-                    try:
-                        location_country = str(
-                            g.reverse(
-                                f"{start_point.lat}, {start_point.lon}",
-                                language="zh-CN",  # type: ignore
-                                timeout=15,
-                            )
-                        )
-                    except Exception:
-                        pass
+            # SKIP reverse geocoding: Nominatim (OSM) has a strict 1 req/sec
+            # rate limit; calling it for hundreds of activities makes sync
+            # take 30+ minutes. The province counter on the page shows 0/35
+            # anyway when location_country is empty, so this is a safe skip.
+            # if not location_country and start_point or location_country == "China":
+            #     try: location_country = str(g.reverse(...)) ...
 
             activity = Activity(
                 run_id=run_activity.id,
