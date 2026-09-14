@@ -76,7 +76,9 @@ def get_cached_country(start_point):
         return ""
     key = f"{round(lat, 3)},{round(lon, 3)}"
     cache = _load_geo_cache()
-    if key in cache:
+    # An empty cached value means a previous lookup failed (e.g. network
+    # blocked); treat it as a miss so we retry instead of being stuck forever.
+    if key in cache and cache[key]:
         return cache[key]
     country = ""
     try:
