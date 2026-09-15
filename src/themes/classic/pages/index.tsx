@@ -434,9 +434,7 @@ const Index = () => {
           thisYear={year}
           animationTrigger={animationTrigger}
         />
-        {year === 'Total' ? (
-          <SVGStat />
-        ) : (
+        {year !== 'Total' && (
           <RunTable
             runs={runs}
             locateActivity={locateActivity}
@@ -444,6 +442,7 @@ const Index = () => {
             setRunIndex={setRunIndex}
           />
         )}
+        <SVGStat />
       </div>
       {/* Enable Audiences in Vercel Analytics: https://vercel.com/docs/concepts/analytics/audiences/quickstart */}
       {import.meta.env.VERCEL && <Analytics />}
