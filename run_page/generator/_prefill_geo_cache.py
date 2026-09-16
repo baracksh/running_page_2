@@ -23,7 +23,12 @@ sys.path.insert(0, HERE)
 
 import polyline  # noqa: E402
 
-from generator.db import GEO_CACHE_FILE, _load_geo_cache, _save_geo_cache, g  # noqa: E402
+from generator.db import (
+    GEO_CACHE_FILE,
+    _load_geo_cache,
+    _save_geo_cache,
+    g,
+)  # noqa: E402
 
 ACTIVITIES_JSON = os.path.join(
     HERE, os.pardir, os.pardir, "src", "static", "activities.json"
@@ -49,7 +54,9 @@ def main():
         keys.append(f"{round(lat, 3)},{round(lon, 3)}")
 
     unique = sorted(set(keys))
-    print(f"{len(activities)} activities, {len(keys)} start points, {len(unique)} unique")
+    print(
+        f"{len(activities)} activities, {len(keys)} start points, {len(unique)} unique"
+    )
 
     cache = _load_geo_cache()
     missing = [k for k in unique if k not in cache]
