@@ -460,7 +460,7 @@ const RunMap = ({
           <span>⚠️ {mapError}</span>
           <button onClick={() => window.location.reload()}>Reload Page</button>
           <a
-            href="https://github.com/yihong0618/running_page#map-tiles-customization"
+            href="https://github.com/baracksh/running_page_2#map-tiles-customization"
             target="_blank"
             rel="noopener noreferrer"
           >

@@ -26,11 +26,11 @@ const data: ISiteMetadataResult = {
     },
     {
       name: 'Blog',
-      url: 'https://github.com/yihong0618/gitblog',
+      url: 'https://github.com/baracksh',
     },
     {
       name: 'About',
-      url: 'https://github.com/yihong0618/running_page/blob/master/README-CN.md',
+      url: 'https://github.com/baracksh/running_page_2',
     },
   ],
 };
