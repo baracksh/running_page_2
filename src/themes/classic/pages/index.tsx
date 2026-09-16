@@ -11,7 +11,6 @@ import { Helmet } from 'react-helmet-async';
 import Layout from '../components/Layout';
 import LocationStat from '../components/LocationStat';
 import RunMap from '../components/RunMap';
-import RunTable from '../components/RunTable';
 import SVGStat from '../components/SVGStat';
 import YearsStat from '../components/YearsStat';
 import useActivities from '../hooks/useActivities';
@@ -86,7 +85,7 @@ const Index = () => {
   const { activities, thisYear } = useActivities();
   const themeChangeCounter = useThemeChangeCounter();
   const [year, setYear] = useState(thisYear);
-  const [runIndex, setRunIndex] = useState(-1);
+  const [, setRunIndex] = useState(-1);
   const [title, setTitle] = useState('');
   // Animation states for replacing intervalIdRef
   const [isAnimating, setIsAnimating] = useState(false);
@@ -434,14 +433,6 @@ const Index = () => {
           thisYear={year}
           animationTrigger={animationTrigger}
         />
-        {year !== 'Total' && (
-          <RunTable
-            runs={runs}
-            locateActivity={locateActivity}
-            runIndex={runIndex}
-            setRunIndex={setRunIndex}
-          />
-        )}
         <SVGStat />
       </div>
       {/* Enable Audiences in Vercel Analytics: https://vercel.com/docs/concepts/analytics/audiences/quickstart */}
