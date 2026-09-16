@@ -98,7 +98,10 @@ const RunMap = ({
 
   // Mapbox GL JS requires a token even when using other vendors
   // Always use the MAPBOX_TOKEN from const.ts (user may have set their own token)
-  const mapboxAccessToken = MAPBOX_TOKEN;
+  // mapbox-gl v3 refuses to fetch tiles when accessToken is empty/undefined,
+  // so pass a placeholder ('no-token') when the user hasn't set one — third
+  // party styles (mapcn/openfreemap) don't validate it, same as dashboard theme.
+  const mapboxAccessToken = MAPBOX_TOKEN || 'no-token';
 
   /**
    * Toggle visibility of map layers based on lights setting
@@ -252,7 +255,9 @@ const RunMap = ({
     (ref: MapRef) => {
       if (ref !== null) {
         const map = ref.getMap();
-        if (map && IS_CHINESE) {
+        if (map && IS_CHINESE && MAP_TILE_VENDOR === 'mapbox') {
+          // MapboxLanguage only supports official Mapbox styles; adding it
+          // with third-party styles throws on every style load.
           map.addControl(new MapboxLanguage({ defaultLanguage: 'zh-Hans' }));
         }
         // all style resources have been downloaded
