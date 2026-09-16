@@ -17,7 +17,7 @@ const getBasePath = () => {
 const data: ISiteMetadataResult = {
   siteTitle: 'Running Page',
   siteUrl: 'https://running-page-2.pages.dev',
-  logo: `${getBasePath()}/runlog-mark.svg`,
+  logo: `${getBasePath()}/runlog-mark.png`,
   description: 'Personal site and blog',
   navLinks: [
     {
