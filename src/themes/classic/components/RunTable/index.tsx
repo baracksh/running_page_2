@@ -36,7 +36,7 @@ const RunTable = ({
   const [sortState, setSortState] = useState<SortState | null>(null);
 
   const sortKeys = useMemo(() => {
-    const keys = [DIST_UNIT, 'Elev', 'Pace', 'BPM', 'Time', 'Date'];
+    const keys = [DIST_UNIT, 'Elev', 'Pace', 'BPM', 'Time'];
     return SHOW_ELEVATION_GAIN ? keys : keys.filter((key) => key !== 'Elev');
   }, []);
 
